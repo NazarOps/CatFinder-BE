@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using InfrastructureLayer.Interfaces;
 
 namespace InfrastructureLayer
 {
@@ -55,6 +56,9 @@ namespace InfrastructureLayer
             services.AddScoped<IAdvertisementImageRepository, AdvertisementImageRepository>();
             services.AddScoped<ISavedAdvertisementRepository, SavedAdvertisementRepository>();
             services.AddScoped<IReportRepository, ReportRepository>();
+
+            // Email verification service
+            services.AddScoped<IEmailService, EmailService>();
 
             // Auth and HTTP context services
             services.AddHttpContextAccessor();

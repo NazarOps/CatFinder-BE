@@ -6,11 +6,14 @@ using ApplicationLayer;
 using ApplicationLayer.Auth;
 using InfrastructureLayer;
 using InfrastructureLayer.Database;
+using InfrastructureLayer.Interfaces;
+using InfrastructureLayer.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using Resend;
 
 namespace APILayer
 {
@@ -18,7 +21,7 @@ namespace APILayer
     {
         public static async Task Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+                var builder = WebApplication.CreateBuilder(args);
 
             // ── Application & Infrastructure ───────────────────────────────────────
             // Registers MediatR, AutoMapper, FluentValidation, and pipeline behaviors
@@ -88,11 +91,23 @@ namespace APILayer
             builder.Services.AddHealthChecks()
                 .AddDbContextCheck<AppDbContext>("database");
 
+            // ───── Email Service ─────────────────────────────────────────────
+            builder.Services.AddOptions();
+            builder.Services.AddHttpClient<ResendClient>();
+            builder.Services.Configure<ResendClientOptions>(options =>
+            {
+                options.ApiToken = builder.Configuration["Resend:ApiKey"]!;
+            });
+
+            builder.Services.AddTransient<IResend, ResendClient>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+
+
             // ── CORS ───────────────────────────────────────────────────────────────
             // AllowCredentials() is required for the HttpOnly refresh token cookie to work
             var corsOrigins = builder.Configuration
                 .GetSection("CorsOrigins").Get<string[]>()
-                ?? new[] { "http://localhost:5173", "http://localhost:3000" };
+                ?? new[] { "http://localhost:5174", "http://localhost:5174",  };
 
             builder.Services.AddCors(options =>
             {
@@ -163,7 +178,7 @@ namespace APILayer
                     """, "text/html"));
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             // Must be before UseAuthentication and UseAuthorization.
             // Must also be before UseStaticFiles so static files include CORS headers —

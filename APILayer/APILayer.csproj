@@ -21,7 +21,6 @@
     <ProjectReference Include="..\InfrastructureLayer\InfrastructureLayer.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Controllers\" />
     <Folder Include="Helpers\" />
     <Folder Include="Middleware\" />
   </ItemGroup>

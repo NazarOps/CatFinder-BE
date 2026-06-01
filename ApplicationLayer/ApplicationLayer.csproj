@@ -8,9 +8,7 @@
     <ProjectReference Include="..\DomainLayer\DomainLayer.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Auth\" />
     <Folder Include="Common\Behaviors\" />
-    <Folder Include="Common\Interfaces\" />
     <Folder Include="Common\Mappings\" />
     <Folder Include="CatReport\Commands\CreateCatReport\" />
     <Folder Include="CatReport\Commands\DeleteCatReport\" />

@@ -1,3 +1,4 @@
+using ApplicationLayer.Auth.Commands.ForgotPassword;
 using ApplicationLayer.Auth.Commands.Login;
 using ApplicationLayer.Auth.Commands.Logout;
 using ApplicationLayer.Auth.Commands.RefreshToken;
@@ -89,10 +90,28 @@ namespace APILayer.Controllers
         [HttpPost("reset-password")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto forgotPasswordDTO)
         {
-            var result = await _mediator.Send(new ResetPasswordCommand(dto));
-            if (!result.IsSuccess) return BadRequest(result);
+            var result = await _mediator.Send(new ResetPasswordCommand(forgotPasswordDTO));
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return NoContent();
+        }
+
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO forgotPasswordDTO)
+        {
+            var result = await _mediator.Send(new ForgotPasswordCommand(forgotPasswordDTO));
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
             return NoContent();
         }
     }

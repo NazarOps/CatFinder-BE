@@ -23,7 +23,6 @@
     <Folder Include="Repositories\Comments\" />
     <Folder Include="Repositories\Locations\" />
     <Folder Include="Repositories\SavedAdvertisements\" />
-    <Folder Include="Services\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
@@ -37,6 +36,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Resend" Version="0.5.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
   </ItemGroup>
 </Project>

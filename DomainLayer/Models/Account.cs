@@ -16,6 +16,9 @@ namespace DomainLayer.Models
         [MaxLength(256)]
         public string Email { get; set; } = string.Empty;
 
+        public string? PasswordResetCode { get; set; }
+        public DateTime? PasswordResetCodeExpiresAt { get; set; }
+
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
