@@ -107,7 +107,7 @@ namespace APILayer
             // AllowCredentials() is required for the HttpOnly refresh token cookie to work
             var corsOrigins = builder.Configuration
                 .GetSection("CorsOrigins").Get<string[]>()
-                ?? new[] { "http://localhost:5174", "http://localhost:5174" };
+                ?? new[] { "http://localhost:5174", "http://localhost:5174",  };
 
             builder.Services.AddCors(options =>
             {
@@ -178,7 +178,7 @@ namespace APILayer
                     """, "text/html"));
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             // Must be before UseAuthentication and UseAuthorization.
             // Must also be before UseStaticFiles so static files include CORS headers —

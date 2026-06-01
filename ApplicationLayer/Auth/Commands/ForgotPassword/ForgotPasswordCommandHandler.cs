@@ -37,13 +37,23 @@ namespace ApplicationLayer.Auth.Commands.ForgotPassword
 
             await _accountRepository.UpdateAsync(account);
 
+            var resetUrl = $"http://localhost:5173/resetpassword?email={account.Email}&code={code}";
+
             await _emailService.SendAsync(
                 account.Email,
                 "Återställ ditt lösenord - CatFinder",
                 $"""
                 <h2>Återställ lösenord</h2>
+
                 <p>Din återställningskod är:</p>
                 <h1>{code}</h1>
+
+                <p>
+                    <a href="{resetUrl}">
+                        Klicka här för att återställa ditt lösenord
+                    </a>
+                </p>
+
                 <p>Koden gäller i 15 minuter.</p>
                 <p>Om du inte begärde detta kan du ignorera detta mail.</p>
                 """
