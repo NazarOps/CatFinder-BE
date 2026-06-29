@@ -62,7 +62,7 @@ namespace APILayer.Controllers
             await using var stream = System.IO.File.Create(Path.Combine(uploadsDir, fileName));
             await file.CopyToAsync(stream);
 
-            var imageUrl = $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+            var imageUrl = $"/uploads/{fileName}";
             var dto = new CreateAdvertisementImageDto
             {
                 AdvertisementId = advertisementId,
