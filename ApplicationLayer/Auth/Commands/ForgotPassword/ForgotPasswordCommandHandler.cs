@@ -37,7 +37,7 @@ namespace ApplicationLayer.Auth.Commands.ForgotPassword
 
             await _accountRepository.UpdateAsync(account);
 
-            var resetUrl = $"http://localhost:5173/resetpassword?email={account.Email}&code={code}";
+            var resetUrl = $"https://catfinder.site/resetpassword?email={account.Email}&code={code}";
 
             await _emailService.SendAsync(
                 account.Email,

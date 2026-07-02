@@ -7,6 +7,7 @@ using ApplicationLayer.CatReport.Queries.GetAllCatReports;
 using ApplicationLayer.CatReport.Queries.GetCatReportbyId;
 using DomainLayer.Models;
 using DomainLayer.Models.Common;
+using DomainLayer.Models.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -246,7 +247,47 @@ public class AdvertisementsControllerTests
         Assert.That(result, Is.InstanceOf<NotFoundObjectResult>()); // result must be a 404 Not Found
     }
 
-    // An advertisement is deleted successfully → controller should return 204 No Content.
+    // An advertisement's moderation status is changed successfully (e.g. Pending â†’ Approved) â†’ controller should return 200 OK.
+    [Test]
+    public async Task UpdateModerationStatus_ReturnsOk_WhenSuccess()
+    {
+        // Arrange
+        _mediator
+            .Setup(m => m.Send(
+                It.IsAny<UpdateAdvertisementModerationStatusCommand>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                OperationResult<AdvertisementResponseDto>.Success(
+                    new AdvertisementResponseDto()));
+
+        // Act
+        var result = await _controller.UpdateModerationStatus(1, ModerationStatus.Approved);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<OkObjectResult>());
+    }
+
+    // Moderation change is attempted but the advertisement does not exist â†’ controller should return 404 Not Found.
+    [Test]
+    public async Task UpdateModerationStatus_ReturnsNotFound_WhenAdvertisementMissing()
+    {
+        // Arrange
+        _mediator
+            .Setup(m => m.Send(
+                It.IsAny<UpdateAdvertisementModerationStatusCommand>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                OperationResult<AdvertisementResponseDto>.Failure(
+                    "Advertisement not found."));
+
+        // Act
+        var result = await _controller.UpdateModerationStatus(99, ModerationStatus.Rejected);
+
+        // Assert
+        Assert.That(result, Is.InstanceOf<NotFoundObjectResult>());
+    }
+
+    // An advertisement is deleted successfully â†’ controller should return 204 No Content.
     [Test]
     public async Task Delete_ReturnsNoContent_WhenSuccess()
     {

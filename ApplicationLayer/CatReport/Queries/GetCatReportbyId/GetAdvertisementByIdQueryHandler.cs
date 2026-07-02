@@ -2,6 +2,7 @@ using ApplicationLayer.CatReport.DTOs;
 using ApplicationLayer.CatReport.Interfaces;
 using AutoMapper;
 using DomainLayer.Models.Common;
+using DomainLayer.Models.Enum;
 using MediatR;
 
 namespace ApplicationLayer.CatReport.Queries.GetCatReportbyId
@@ -22,7 +23,7 @@ namespace ApplicationLayer.CatReport.Queries.GetCatReportbyId
             GetAdvertisementByIdQuery request, CancellationToken cancellationToken)
         {
             var ad = await _repo.GetByIdAsync(request.Id);
-            if (ad is null)
+            if (ad is null || !ad.IsVisible || ad.ModerationStatus != ModerationStatus.Approved)
                 return OperationResult<AdvertisementResponseDto>.Failure("Advertisement not found.");
 
             return OperationResult<AdvertisementResponseDto>.Success(

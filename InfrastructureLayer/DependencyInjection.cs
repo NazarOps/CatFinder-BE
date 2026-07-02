@@ -42,7 +42,7 @@ namespace InfrastructureLayer
                 ?? throw new InvalidOperationException("Connection string 'CatFinderDb' not found.");
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(connectionString));
+                options.UseNpgsql(connectionString));
 
             services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
 

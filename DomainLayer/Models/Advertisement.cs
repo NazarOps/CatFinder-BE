@@ -1,3 +1,4 @@
+using DomainLayer.Models.Enum;
 using System.ComponentModel.DataAnnotations;
 
 namespace DomainLayer.Models
@@ -34,7 +35,9 @@ namespace DomainLayer.Models
 
         public AdvertisementStatus Status { get; set; }
 
-        public bool IsVisible { get; set; } = true;
+        public ModerationStatus ModerationStatus { get; set; } = ModerationStatus.Pending;
+
+        public bool IsVisible { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

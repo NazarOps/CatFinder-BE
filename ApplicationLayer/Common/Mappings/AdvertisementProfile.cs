@@ -1,6 +1,7 @@
 using ApplicationLayer.CatReport.DTOs;
 using AutoMapper;
 using DomainLayer.Models;
+using DomainLayer.Models.Enum;
 
 namespace ApplicationLayer.Common.Mappings
 {
@@ -20,6 +21,10 @@ namespace ApplicationLayer.Common.Mappings
                     opt => opt.Ignore())
                 .ForMember(dest => dest.Status,
                     opt => opt.MapFrom(_ => AdvertisementStatus.Active))
+                .ForMember(dest => dest.ModerationStatus,
+                    opt => opt.MapFrom(_ => ModerationStatus.Pending))
+                .ForMember(dest => dest.IsVisible,
+                    opt => opt.MapFrom(_ => false))
                 .ForMember(dest => dest.Cat,
                     opt => opt.MapFrom(src => src.Cat))
                 .ForMember(dest => dest.Location,

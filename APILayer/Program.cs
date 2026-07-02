@@ -11,6 +11,7 @@ using InfrastructureLayer.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Resend;
@@ -213,10 +214,19 @@ namespace APILayer
                 }
             }).DisableRateLimiting();
 
+            await ApplyMigrationsAsync(app.Services);
+
             if (app.Environment.IsDevelopment())
                 await SeedAdminAsync(app.Services);
 
             app.Run();
+        }
+
+        static async Task ApplyMigrationsAsync(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await dbContext.Database.MigrateAsync();
         }
 
         static async Task SeedAdminAsync(IServiceProvider services)

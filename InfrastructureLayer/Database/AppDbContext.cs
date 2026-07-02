@@ -1,4 +1,5 @@
 using DomainLayer.Models;
+using DomainLayer.Models.Enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace InfrastructureLayer.Database
@@ -49,8 +50,12 @@ namespace InfrastructureLayer.Database
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Advertisement>()
+                .Property(a => a.ModerationStatus)
+                .HasDefaultValue(ModerationStatus.Pending);
+
+            modelBuilder.Entity<Advertisement>()
                 .Property(a => a.IsVisible)
-                .HasDefaultValue(true);
+                .HasDefaultValue(false);
 
             // ── Advertisement → Cat ────────────────────────────────────────────────
             // Restrict prevents SQL Server from raising a multiple-cascade-paths error.
