@@ -5,6 +5,7 @@ using ApplicationLayer.AdvertisementImages.Queries.GetByAdvertisement;
 using ApplicationLayer.AdvertisementImages.Queries.GetById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 
 namespace APILayer.Controllers
 {
@@ -21,6 +22,13 @@ namespace APILayer.Controllers
         public async Task<IActionResult> GetByAdvertisement(int advertisementId)
         {
             var result = await _mediator.Send(new GetAdvertisementImagesByAdvertisementQuery(advertisementId));
+            if (result.Data is not null)
+            {
+                foreach (var image in result.Data)
+                {
+                    image.ImageUrl = ToAbsoluteImageUrl(image.ImageUrl);
+                }
+            }
             return Ok(result);
         }
 
@@ -31,6 +39,8 @@ namespace APILayer.Controllers
         {
             var result = await _mediator.Send(new GetAdvertisementImageByIdQuery(id));
             if (!result.IsSuccess) return NotFound(result);
+            if (result.Data is not null)
+                result.Data.ImageUrl = ToAbsoluteImageUrl(result.Data.ImageUrl);
             return Ok(result);
         }
 
@@ -41,6 +51,8 @@ namespace APILayer.Controllers
         {
             var result = await _mediator.Send(new CreateAdvertisementImageCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
+            if (result.Data is not null)
+                result.Data.ImageUrl = ToAbsoluteImageUrl(result.Data.ImageUrl);
             return CreatedAtAction(nameof(GetById), new { id = result.Data!.AdvertisementImageId }, result);
         }
 
@@ -72,6 +84,8 @@ namespace APILayer.Controllers
 
             var result = await _mediator.Send(new CreateAdvertisementImageCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
+            if (result.Data is not null)
+                result.Data.ImageUrl = ToAbsoluteImageUrl(result.Data.ImageUrl);
             return CreatedAtAction(nameof(GetById), new { id = result.Data!.AdvertisementImageId }, result);
         }
 
@@ -83,6 +97,18 @@ namespace APILayer.Controllers
             var result = await _mediator.Send(new DeleteAdvertisementImageCommand(id));
             if (!result.IsSuccess) return NotFound(result);
             return NoContent();
+        }
+
+        private string ToAbsoluteImageUrl(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return imageUrl;
+
+            if (Uri.TryCreate(imageUrl, UriKind.Absolute, out _))
+                return imageUrl;
+
+            var normalizedPath = imageUrl.StartsWith('/') ? imageUrl : $"/{imageUrl}";
+            return $"{Request.Scheme}://{Request.Host}{normalizedPath}";
         }
     }
 }
