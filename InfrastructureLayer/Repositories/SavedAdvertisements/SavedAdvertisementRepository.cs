@@ -1,5 +1,6 @@
 using ApplicationLayer.SavedAdvertisements.Interfaces;
 using DomainLayer.Models;
+using DomainLayer.Models.Enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace InfrastructureLayer.Repositories.SavedAdvertisements
@@ -23,7 +24,9 @@ namespace InfrastructureLayer.Repositories.SavedAdvertisements
                     .ThenInclude(a => a.Cat)
                 .Include(x => x.Advertisement)
                     .ThenInclude(a => a.Location)
-                .Where(x => x.AccountId == accountId && x.Advertisement.IsVisible)
+                .Where(x => x.AccountId == accountId
+                    && x.Advertisement.IsVisible
+                    && x.Advertisement.ModerationStatus == ModerationStatus.Approved)
                 .ToListAsync();
         }
         

@@ -4,6 +4,7 @@ using ApplicationLayer.Common.Interfaces;
 using AutoMapper;
 using DomainLayer.Models;
 using DomainLayer.Models.Common;
+using DomainLayer.Models.Enum;
 using MediatR;
 
 namespace ApplicationLayer.CatReport.Commands.CreateCatReport
@@ -32,6 +33,9 @@ namespace ApplicationLayer.CatReport.Commands.CreateCatReport
 
             var ad = _mapper.Map<Advertisement>(request.Dto);
             ad.AccountId = accountId.Value;
+            ad.Status = AdvertisementStatus.Active;
+            ad.ModerationStatus = ModerationStatus.Pending;
+            ad.IsVisible = false;
 
             if (ad.Cat is not null)
             {

@@ -103,6 +103,9 @@ All settings live in `APILayer/appsettings.json`.
 | POST | `/api/advertisements` | Yes |
 | PUT | `/api/advertisements/{id}` | Yes |
 | PUT | `/api/advertisements/{id}/status` | Yes |
+| GET | `/api/advertisements/my` | Yes |
+| GET | `/api/advertisements/admin` | Admin |
+| PUT | `/api/advertisements/{id}/moderation-status` | Admin |
 | DELETE | `/api/advertisements/{id}` | Yes |
 
 Query params for listing: `type` (`Lost` or `Found`), `city`

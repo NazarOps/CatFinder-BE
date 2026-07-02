@@ -1,5 +1,6 @@
 using ApplicationLayer.CatReport.Interfaces;
 using DomainLayer.Models;
+using DomainLayer.Models.Enum;
 using Microsoft.EntityFrameworkCore;
 
 namespace InfrastructureLayer.Repositories.Advertisements
@@ -29,14 +30,22 @@ namespace InfrastructureLayer.Repositories.Advertisements
         /// Filters by Lost or Found. Maps to GET /api/advertisements?type=Lost.
         /// </summary>
         public async Task<IEnumerable<Advertisement>> GetByTypeAsync(AdvertisementType type)
-            => await _dbSet.Where(a => a.Type == type).ToListAsync();
+            => await _dbSet
+                .Where(a => a.Type == type
+                    && a.IsVisible
+                    && a.ModerationStatus == ModerationStatus.Approved)
+                .ToListAsync();
 
         /// <summary>
         /// Filters by advertisement status (Active, Resolved, Closed).
         /// Typically used internally to show only active listings by default.
         /// </summary>
         public async Task<IEnumerable<Advertisement>> GetByStatusAsync(AdvertisementStatus status)
-            => await _dbSet.Where(a => a.Status == status).ToListAsync();
+            => await _dbSet
+                .Where(a => a.Status == status
+                    && a.IsVisible
+                    && a.ModerationStatus == ModerationStatus.Approved)
+                .ToListAsync();
 
         /// <summary>
         /// Combined filter used by GET /api/advertisements?type=Lost&amp;city=Göteborg.
@@ -47,7 +56,7 @@ namespace InfrastructureLayer.Repositories.Advertisements
             var query = _dbSet
                 .Include(a => a.Cat)
                 .Include(a => a.Location)
-                .Where(a => a.IsVisible)
+                .Where(a => a.IsVisible && a.ModerationStatus == ModerationStatus.Approved)
                 .AsQueryable();
 
             if (type.HasValue)

@@ -6,6 +6,7 @@ using ApplicationLayer.CatReport.Queries.GetAllCatReports;
 using ApplicationLayer.CatReport.Queries.GetCatReportbyId;
 using ApplicationLayer.CatReport.Queries.GetMyAdvertisements;
 using DomainLayer.Models;
+using DomainLayer.Models.Enum;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,16 +52,16 @@ namespace APILayer.Controllers
         }
 
         // POST /api/advertisements
-        // Creates a new Lost or Found advertisement.
+        // Creates a new Lost or Found advertisement and submits it for admin moderation.
         // Requires an existing CatId and LocationId in the request body.
         [HttpPost]
-        [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateAdvertisementDto dto)
         {
             var result = await _mediator.Send(new CreateAdvertisementCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
-            return CreatedAtAction(nameof(GetById), new { id = result.Data!.AdvertisementId }, result);
+            return Accepted(result);
         }
 
         // PUT /api/advertisements/{id}
@@ -106,7 +107,7 @@ namespace APILayer.Controllers
         }
 
         // GET /api/advertisements/admin
-        // Admin-only: returns all advertisements regardless of visibility.
+        // Admin-only: returns all advertisements regardless of visibility or moderation state.
         [HttpGet("admin")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(IEnumerable<AdvertisementResponseDto>), StatusCodes.Status200OK)]
@@ -118,15 +119,16 @@ namespace APILayer.Controllers
             return Ok(result);
         }
 
-        // PUT /api/advertisements/{id}/visibility
-        // Admin-only: sets whether an advertisement is visible to regular users.
-        [HttpPut("{id:int}/visibility")]
+        // PUT /api/advertisements/{id}/moderation-status
+        // Admin-only: approves, rejects, or returns an advertisement to pending review.
+        [HttpPut("{id:int}/moderation-status")]
         [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> UpdateVisibility(int id, [FromBody] bool isVisible)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateModerationStatus(int id, [FromBody] ModerationStatus moderationStatus)
         {
-            var result = await _mediator.Send(new UpdateAdvertisementVisibilityCommand(id, isVisible));
+            var result = await _mediator.Send(new UpdateAdvertisementModerationStatusCommand(id, moderationStatus));
             if (!result.IsSuccess) return result.Errors.Contains("Advertisement not found.")
                 ? NotFound(result) : BadRequest(result);
             return Ok(result);
