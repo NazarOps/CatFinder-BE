@@ -29,6 +29,18 @@ namespace InfrastructureLayer.Repositories.SavedAdvertisements
                     && x.Advertisement.ModerationStatus == ModerationStatus.Approved)
                 .ToListAsync();
         }
-        
+
+        public async Task<SavedAdvertisement?> GetOwnedByIdAsync(int savedAdvertisementId, int accountId)
+        {
+            return await _dbSet
+                .Include(x => x.Advertisement)
+                    .ThenInclude(a => a.Cat)
+                .Include(x => x.Advertisement)
+                    .ThenInclude(a => a.Location)
+                .FirstOrDefaultAsync(x => x.SavedAdvertisementId == savedAdvertisementId
+                    && x.AccountId == accountId
+                    && x.Advertisement.IsVisible
+                    && x.Advertisement.ModerationStatus == ModerationStatus.Approved);
+        }
     }
 }

@@ -8,7 +8,7 @@ using MediatR;
 namespace ApplicationLayer.CatReport.Queries.GetCatReportbyId
 {
     public class GetAdvertisementByIdQueryHandler
-        : IRequestHandler<GetAdvertisementByIdQuery, OperationResult<AdvertisementResponseDto>>
+        : IRequestHandler<GetAdvertisementByIdQuery, OperationResult<PublicAdvertisementResponseDto>>
     {
         private readonly IAdvertisementRepository _repo;
         private readonly IMapper _mapper;
@@ -19,15 +19,15 @@ namespace ApplicationLayer.CatReport.Queries.GetCatReportbyId
             _mapper = mapper;
         }
 
-        public async Task<OperationResult<AdvertisementResponseDto>> Handle(
+        public async Task<OperationResult<PublicAdvertisementResponseDto>> Handle(
             GetAdvertisementByIdQuery request, CancellationToken cancellationToken)
         {
             var ad = await _repo.GetByIdAsync(request.Id);
             if (ad is null || !ad.IsVisible || ad.ModerationStatus != ModerationStatus.Approved)
-                return OperationResult<AdvertisementResponseDto>.Failure("Advertisement not found.");
+                return OperationResult<PublicAdvertisementResponseDto>.Failure("Advertisement not found.");
 
-            return OperationResult<AdvertisementResponseDto>.Success(
-                _mapper.Map<AdvertisementResponseDto>(ad));
+            return OperationResult<PublicAdvertisementResponseDto>.Success(
+                _mapper.Map<PublicAdvertisementResponseDto>(ad));
         }
     }
 }

@@ -2,12 +2,14 @@ using ApplicationLayer.Users.Commands.UpdateUser;
 using ApplicationLayer.Users.DTOs;
 using ApplicationLayer.Users.Queries.GetUserbyId;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APILayer.Controllers
 {
     // Handles profile management for existing accounts.
     // Authentication (register, login, logout, reset-password) is handled by AuthController.
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AccountsController : ControllerBase
@@ -24,6 +26,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _mediator.Send(new GetAccountByIdQuery(id));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return NotFound(result);
             return Ok(result);
         }
@@ -37,6 +41,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateAccountDto dto)
         {
             var result = await _mediator.Send(new UpdateAccountCommand(id, dto));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return result.Errors.Contains("Account not found.")
                 ? NotFound(result) : BadRequest(result);
             return Ok(result);

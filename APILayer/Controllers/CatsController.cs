@@ -22,7 +22,7 @@ namespace APILayer.Controllers
         // GET /api/cats/{id}
         // Returns a single cat's details by its id.
         [HttpGet("{id:int}")]
-        [ProducesResponseType(typeof(CatResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PublicCatResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
@@ -34,6 +34,7 @@ namespace APILayer.Controllers
         // POST /api/cats
         // Registers a new cat under the authenticated account.
         // The cat must be created before posting a Lost/Found advertisement.
+        [Authorize]
         [HttpPost]
         [ProducesResponseType(typeof(CatResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -47,6 +48,7 @@ namespace APILayer.Controllers
         // PUT /api/cats/{id}
         // Updates a cat's information (name, breed, fur colour, chip status, etc.).
         // Only the owner of the cat should be allowed to update it.
+        [Authorize]
         [HttpPut("{id:int}")]
         [ProducesResponseType(typeof(CatResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -54,6 +56,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateCatDto dto)
         {
             var result = await _mediator.Send(new UpdateCatCommand(id, dto));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return result.Errors.Contains("Cat not found.")
                 ? NotFound(result) : BadRequest(result);
             return Ok(result);
@@ -61,12 +65,15 @@ namespace APILayer.Controllers
 
         // DELETE /api/cats/{id}
         // Removes a cat record. Should also cascade-remove any linked advertisements.
+        [Authorize]
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _mediator.Send(new DeleteCatCommand(id));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return NotFound(result);
             return NoContent();
         }

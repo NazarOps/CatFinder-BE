@@ -28,7 +28,7 @@ namespace APILayer.Controllers
         // GET /api/advertisements?city=Göteborg
         // Returns all advertisements, with optional filtering by type and/or city.
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<AdvertisementResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(IEnumerable<PublicAdvertisementResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll(
             [FromQuery] AdvertisementType? type,
             [FromQuery] string? city,
@@ -42,7 +42,7 @@ namespace APILayer.Controllers
         // GET /api/advertisements/{id}
         // Returns a single advertisement by its id.
         [HttpGet("{id:int}")]
-        [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PublicAdvertisementResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
@@ -54,6 +54,7 @@ namespace APILayer.Controllers
         // POST /api/advertisements
         // Creates a new Lost or Found advertisement and submits it for admin moderation.
         // Requires an existing CatId and LocationId in the request body.
+        [Authorize]
         [HttpPost]
         [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status202Accepted)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -67,6 +68,7 @@ namespace APILayer.Controllers
         // PUT /api/advertisements/{id}
         // Updates the details of an advertisement (title, description, contact info, etc.).
         // Only the owner of the advertisement should be allowed to update it.
+        [Authorize]
         [HttpPut("{id:int}")]
         [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -74,6 +76,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateAdvertisementDto dto)
         {
             var result = await _mediator.Send(new UpdateAdvertisementCommand(id, dto));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return result.Errors.Contains("Advertisement not found.")
                 ? NotFound(result) : BadRequest(result);
             return Ok(result);
@@ -82,6 +86,7 @@ namespace APILayer.Controllers
         // PUT /api/advertisements/{id}/status
         // Changes only the status of an advertisement (Active → Resolved or Closed).
         // Kept as a separate endpoint because status change is a distinct user action.
+        [Authorize]
         [HttpPut("{id:int}/status")]
         [ProducesResponseType(typeof(AdvertisementResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -89,6 +94,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] AdvertisementStatus status)
         {
             var result = await _mediator.Send(new UpdateAdvertisementStatusCommand(id, status));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return result.Errors.Contains("Advertisement not found.")
                 ? NotFound(result) : BadRequest(result);
             return Ok(result);
@@ -136,12 +143,15 @@ namespace APILayer.Controllers
 
         // DELETE /api/advertisements/{id}
         // Removes an advertisement. Only the owner or an admin should be allowed.
+        [Authorize]
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _mediator.Send(new DeleteAdvertisementCommand(id));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return NotFound(result);
             return NoContent();
         }

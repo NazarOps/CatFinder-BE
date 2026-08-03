@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace ApplicationLayer.Auth.DTOs
 {
     public class AuthResponseDto
     {
         public string Token { get; set; } = string.Empty;
+        [JsonIgnore]
         public string RefreshToken { get; set; } = string.Empty;
         public DateTime ExpiresAt { get; set; }
         public int AccountId { get; set; }

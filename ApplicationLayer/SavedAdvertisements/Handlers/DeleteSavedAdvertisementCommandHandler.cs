@@ -23,11 +23,10 @@ namespace ApplicationLayer.SavedAdvertisements.Handlers
             var accountId = _userContext.AccountId;
             if (accountId is null) return;
 
-            var entries = await _repo.FindAsync(
-                s => s.AdvertisementId == request.Id && s.AccountId == accountId.Value);
+            var entry = await _repo.GetOwnedByIdAsync(request.SavedAdvertisementId, accountId.Value);
+            if (entry is null) return;
 
-            foreach (var entry in entries)
-                await _repo.DeleteAsync(entry);
+            await _repo.DeleteAsync(entry);
         }
     }
 }

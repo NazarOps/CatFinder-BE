@@ -1,4 +1,5 @@
 using ApplicationLayer.Auth.Interfaces;
+using ApplicationLayer.Common.Security;
 using ApplicationLayer.Users.Interfaces;
 using DomainLayer.Models.Common;
 using MediatR;
@@ -20,29 +21,20 @@ namespace ApplicationLayer.Auth.Commands.ResetPassword
         {
             var account = await _repo.GetByEmailAsync(request.Dto.Email);
 
-            if (account is null)
+            if (account is null
+                || string.IsNullOrWhiteSpace(account.PasswordResetCode)
+                || account.PasswordResetCodeExpiresAt is null
+                || account.PasswordResetCodeExpiresAt < DateTime.UtcNow
+                || !TokenHasher.Verify(request.Dto.Code, account.PasswordResetCode))
             {
-                return OperationResult<bool>.Failure("No account found with that email address.");
-            }
-
-            if (string.IsNullOrWhiteSpace(account.PasswordResetCode))
-            {
-                return OperationResult<bool>.Failure("No reset code exists for this account.");
-            }
-
-            if(account.PasswordResetCode != request.Dto.Code)
-            {
-                return OperationResult<bool>.Failure("Invalid reset code.");
-            }
-
-            if(account.PasswordResetCodeExpiresAt is null || account.PasswordResetCodeExpiresAt < DateTime.UtcNow)
-            {
-                return OperationResult<bool>.Failure("Reset code has expired");
+                return OperationResult<bool>.Failure("Invalid or expired reset code.");
             }
 
             account.PasswordHash = _authService.HashPassword(request.Dto.NewPassword);
             account.PasswordResetCode = null;
             account.PasswordResetCodeExpiresAt = null;
+            account.RefreshToken = null;
+            account.RefreshTokenExpiresAt = null;
             account.UpdatedAt = DateTime.UtcNow;
 
             await _repo.UpdateAsync(account);

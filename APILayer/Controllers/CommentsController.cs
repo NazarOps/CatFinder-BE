@@ -31,11 +31,13 @@ namespace APILayer.Controllers
 
         // POST /api/advertisements/{advertisementId}/comments
         // Adds a new comment to an advertisement. AccountId is taken from the JWT token.
+        [Authorize]
         [HttpPost("/api/advertisements/{advertisementId:int}/comments")]
         [ProducesResponseType(typeof(CommentResponseDto), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create(int advertisementId, [FromBody] CreateCommentDto dto)
         {
+            dto.AdvertisementId = advertisementId;
             var result = await _mediator.Send(new CreateCommentCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
             return StatusCode(StatusCodes.Status201Created, result);
@@ -50,6 +52,8 @@ namespace APILayer.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _mediator.Send(new DeleteCommentCommand(id));
+            if (!result.IsSuccess && result.Errors.Contains("Forbidden."))
+                return Forbid();
             if (!result.IsSuccess) return NotFound(result);
             return NoContent();
         }

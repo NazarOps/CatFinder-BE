@@ -7,7 +7,7 @@ using MediatR;
 namespace ApplicationLayer.CatReport.Queries.GetAllCatReports
 {
     public class GetAllAdvertisementsQueryHandler
-        : IRequestHandler<GetAllAdvertisementsQuery, OperationResult<List<AdvertisementResponseDto>>>
+        : IRequestHandler<GetAllAdvertisementsQuery, OperationResult<List<PublicAdvertisementResponseDto>>>
     {
         private readonly IAdvertisementRepository _repo;
         private readonly IMapper _mapper;
@@ -18,12 +18,12 @@ namespace ApplicationLayer.CatReport.Queries.GetAllCatReports
             _mapper = mapper;
         }
 
-        public async Task<OperationResult<List<AdvertisementResponseDto>>> Handle(
+        public async Task<OperationResult<List<PublicAdvertisementResponseDto>>> Handle(
             GetAllAdvertisementsQuery request, CancellationToken cancellationToken)
         {
             var ads = await _repo.GetFilteredAsync(request.Type, request.City, request.Skip, request.Take);
-            return OperationResult<List<AdvertisementResponseDto>>.Success(
-                _mapper.Map<List<AdvertisementResponseDto>>(ads));
+            return OperationResult<List<PublicAdvertisementResponseDto>>.Success(
+                _mapper.Map<List<PublicAdvertisementResponseDto>>(ads));
         }
     }
 }

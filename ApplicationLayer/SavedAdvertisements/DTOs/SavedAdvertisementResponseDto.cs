@@ -8,6 +8,6 @@ namespace ApplicationLayer.SavedAdvertisements.DTOs
         public int AccountId { get; set; }
         public int AdvertisementId { get; set; }
         public DateTime CreatedAt { get; set; }
-        public AdvertisementResponseDto? Advertisement { get; set; }
+        public PublicAdvertisementResponseDto? Advertisement { get; set; }
     }
 }

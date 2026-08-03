@@ -14,5 +14,10 @@ namespace ApplicationLayer.SavedAdvertisements.Interfaces
         /// Used to display a user's saved listings page.
         /// </summary>
         Task<IEnumerable<SavedAdvertisement>> GetByAccountIdAsync(int accountId);
+
+        /// <summary>
+        /// Returns a single saved advertisement only when it belongs to the specified account.
+        /// </summary>
+        Task<SavedAdvertisement?> GetOwnedByIdAsync(int savedAdvertisementId, int accountId);
     }
 }

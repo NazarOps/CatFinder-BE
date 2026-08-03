@@ -4,12 +4,16 @@ using ApplicationLayer.Auth.Commands.Logout;
 using ApplicationLayer.Auth.Commands.RefreshToken;
 using ApplicationLayer.Auth.Commands.Register;
 using ApplicationLayer.Auth.Commands.ResetPassword;
+using ApplicationLayer.Auth;
 using ApplicationLayer.Auth.DTOs;
 using ApplicationLayer.Common.Interfaces;
+using APILayer.Helpers;
+using DomainLayer.Models.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace APILayer.Controllers
 {
@@ -21,11 +25,16 @@ namespace APILayer.Controllers
     {
         private readonly ISender _mediator;
         private readonly IUserContextService _userContext;
+        private readonly JwtSettings _jwtSettings;
 
-        public AuthController(ISender mediator, IUserContextService userContext)
+        public AuthController(
+            ISender mediator,
+            IUserContextService userContext,
+            IOptions<JwtSettings> jwtOptions)
         {
             _mediator = mediator;
             _userContext = userContext;
+            _jwtSettings = jwtOptions.Value;
         }
 
         // POST /api/auth/register
@@ -38,6 +47,7 @@ namespace APILayer.Controllers
         {
             var result = await _mediator.Send(new RegisterCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
+            SetRefreshTokenCookie(result.Data!.RefreshToken);
             return StatusCode(StatusCodes.Status201Created, result);
         }
 
@@ -51,19 +61,33 @@ namespace APILayer.Controllers
         {
             var result = await _mediator.Send(new LoginCommand(dto));
             if (!result.IsSuccess) return BadRequest(result);
+            SetRefreshTokenCookie(result.Data!.RefreshToken);
             return Ok(result);
         }
 
         // POST /api/auth/refresh-token
         // Issues a new JWT using a valid, unexpired refresh token. Rotates the refresh token.
-        [EnableRateLimiting("auth")]
+        [EnableRateLimiting("session")]
         [HttpPost("refresh-token")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> RefreshToken([FromBody] string refreshToken)
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> RefreshToken()
         {
+            var refreshToken = Request.Cookies[RefreshTokenCookieHelper.CookieName];
+            if (string.IsNullOrWhiteSpace(refreshToken))
+            {
+                ClearRefreshTokenCookie();
+                return Unauthorized(OperationResult<AuthResponseDto>.Failure("Missing refresh token."));
+            }
+
             var result = await _mediator.Send(new RefreshTokenCommand(refreshToken));
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!result.IsSuccess)
+            {
+                ClearRefreshTokenCookie();
+                return Unauthorized(result);
+            }
+
+            SetRefreshTokenCookie(result.Data!.RefreshToken);
             return Ok(result);
         }
 
@@ -81,6 +105,7 @@ namespace APILayer.Controllers
 
             var result = await _mediator.Send(new LogoutCommand(accountId.Value));
             if (!result.IsSuccess) return BadRequest(result);
+            ClearRefreshTokenCookie();
             return NoContent();
         }
 
@@ -99,9 +124,11 @@ namespace APILayer.Controllers
                 return BadRequest(result);
             }
 
+            ClearRefreshTokenCookie();
             return NoContent();
         }
 
+        [EnableRateLimiting("auth")]
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDTO forgotPasswordDTO)
         {
@@ -113,6 +140,20 @@ namespace APILayer.Controllers
             }
 
             return NoContent();
+        }
+
+        private void SetRefreshTokenCookie(string refreshToken)
+        {
+            RefreshTokenCookieHelper.Append(
+                Response,
+                refreshToken,
+                DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenExpiresInDays),
+                Request.IsHttps);
+        }
+
+        private void ClearRefreshTokenCookie()
+        {
+            RefreshTokenCookieHelper.Clear(Response, Request.IsHttps);
         }
     }
 }

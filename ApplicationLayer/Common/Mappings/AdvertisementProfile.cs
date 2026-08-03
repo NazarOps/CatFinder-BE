@@ -9,6 +9,10 @@ namespace ApplicationLayer.Common.Mappings
     {
         public AdvertisementProfile()
         {
+            CreateMap<Advertisement, PublicAdvertisementResponseDto>()
+                .ForMember(dest => dest.Cat, opt => opt.MapFrom(src => src.Cat))
+                .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location));
+
             // Advertisement -> Response DTO
             CreateMap<Advertisement, AdvertisementResponseDto>()
                 .ForMember(dest => dest.Cat, opt => opt.MapFrom(src => src.Cat))

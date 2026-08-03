@@ -5,5 +5,5 @@ using System.Text;
 
 namespace ApplicationLayer.SavedAdvertisements.Commands
 {
-    public record DeleteSavedAdvertisementCommand(int Id) : IRequest;
+    public record DeleteSavedAdvertisementCommand(int SavedAdvertisementId) : IRequest;
 }

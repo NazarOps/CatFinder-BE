@@ -4,5 +4,5 @@ using MediatR;
 
 namespace ApplicationLayer.CatReport.Queries.GetCatReportbyId
 {
-    public record GetAdvertisementByIdQuery(int Id) : IRequest<OperationResult<AdvertisementResponseDto>>;
+    public record GetAdvertisementByIdQuery(int Id) : IRequest<OperationResult<PublicAdvertisementResponseDto>>;
 }

@@ -1,5 +1,6 @@
 using ApplicationLayer.Auth.DTOs;
 using ApplicationLayer.Auth.Interfaces;
+using ApplicationLayer.Common.Security;
 using ApplicationLayer.Users.Interfaces;
 using DomainLayer.Models.Common;
 using MediatR;
@@ -26,14 +27,15 @@ namespace ApplicationLayer.Auth.Commands.RefreshToken
                 return OperationResult<AuthResponseDto>.Failure("Invalid or expired refresh token.");
 
             var (token, expiresAt) = _authService.GenerateJwtToken(account);
-            account.RefreshToken = _authService.GenerateRefreshToken();
+            var refreshToken = _authService.GenerateRefreshToken();
+            account.RefreshToken = TokenHasher.Hash(refreshToken);
             account.RefreshTokenExpiresAt = DateTime.UtcNow.AddDays(7);
             await _repo.UpdateAsync(account);
 
             return OperationResult<AuthResponseDto>.Success(new AuthResponseDto
             {
                 Token = token,
-                RefreshToken = account.RefreshToken,
+                RefreshToken = refreshToken,
                 ExpiresAt = expiresAt,
                 AccountId = account.AccountId,
                 Username = account.Username,

@@ -78,14 +78,27 @@ namespace APILayer
                             QueueLimit = 0
                         }));
 
-                // Stricter per-IP policy for login / register / reset-password
-                options.AddFixedWindowLimiter("auth", limiterOptions =>
-                {
-                    limiterOptions.PermitLimit = builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10);
-                    limiterOptions.Window = TimeSpan.FromSeconds(builder.Configuration.GetValue("RateLimiting:Auth:WindowSeconds", 60));
-                    limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    limiterOptions.QueueLimit = 0;
-                });
+                // Stricter per-IP policy for login / register / forgot-password / reset-password
+                options.AddPolicy("auth", context =>
+                    CreatePerIpFixedWindowLimiter(
+                        context,
+                        builder.Configuration.GetValue("RateLimiting:Auth:PermitLimit", 10),
+                        builder.Configuration.GetValue("RateLimiting:Auth:WindowSeconds", 60)));
+
+                // Refresh-token is used by session bootstrap and retry flows, so it needs a
+                // looser budget than login-style endpoints while still being IP-partitioned.
+                options.AddPolicy("session", context =>
+                    CreatePerIpFixedWindowLimiter(
+                        context,
+                        builder.Configuration.GetValue("RateLimiting:Session:PermitLimit", 30),
+                        builder.Configuration.GetValue("RateLimiting:Session:WindowSeconds", 60)));
+
+                // Upload/analysis endpoints are user actions, not auth attempts.
+                options.AddPolicy("uploads", context =>
+                    CreatePerIpFixedWindowLimiter(
+                        context,
+                        builder.Configuration.GetValue("RateLimiting:Uploads:PermitLimit", 30),
+                        builder.Configuration.GetValue("RateLimiting:Uploads:WindowSeconds", 60)));
             });
 
             // ── Health Checks ──────────────────────────────────────────────────────
@@ -227,6 +240,22 @@ namespace APILayer
             using var scope = services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await dbContext.Database.MigrateAsync();
+        }
+
+        private static RateLimitPartition<string> CreatePerIpFixedWindowLimiter(
+            HttpContext context,
+            int permitLimit,
+            int windowSeconds)
+        {
+            return RateLimitPartition.GetFixedWindowLimiter(
+                partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                factory: _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permitLimit,
+                    Window = TimeSpan.FromSeconds(windowSeconds),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
         }
 
         static async Task SeedAdminAsync(IServiceProvider services)

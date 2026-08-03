@@ -1,11 +1,9 @@
-﻿using ApplicationLayer.Users.Interfaces;
+using System.Security.Cryptography;
+using ApplicationLayer.Common.Security;
+using ApplicationLayer.Users.Interfaces;
 using DomainLayer.Models.Common;
 using InfrastructureLayer.Interfaces;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Net.NetworkInformation;
-using System.Text;
 
 namespace ApplicationLayer.Auth.Commands.ForgotPassword
 {
@@ -24,14 +22,14 @@ namespace ApplicationLayer.Auth.Commands.ForgotPassword
         {
             var account = await _accountRepository.GetByEmailAsync(request.forgotPasswordDTO.Email);
 
-            if(account == null)
+            if (account == null)
             {
                 return OperationResult<bool>.Success(true);
             }
 
-            var code = Random.Shared.Next(100000, 999999).ToString();
+            var code = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-            account.PasswordResetCode = code;
+            account.PasswordResetCode = TokenHasher.Hash(code);
             account.PasswordResetCodeExpiresAt = DateTime.UtcNow.AddMinutes(15);
             account.UpdatedAt = DateTime.UtcNow;
 
@@ -60,7 +58,6 @@ namespace ApplicationLayer.Auth.Commands.ForgotPassword
             );
 
             return OperationResult<bool>.Success(true);
-
         }
     }
 }

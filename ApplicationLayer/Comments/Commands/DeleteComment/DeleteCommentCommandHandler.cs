@@ -1,3 +1,4 @@
+using ApplicationLayer.Common.Interfaces;
 using ApplicationLayer.Comments.Interfaces;
 using ApplicationLayer.Reports.Interfaces;
 using DomainLayer.Models.Common;
@@ -9,21 +10,31 @@ namespace ApplicationLayer.Comments.Commands.DeleteComment
     {
         private readonly ICommentRepository _repo;
         private readonly IReportRepository _reportRepo;
+        private readonly IUserContextService _userContext;
 
-        public DeleteCommentCommandHandler(ICommentRepository repo, IReportRepository reportRepo)
+        public DeleteCommentCommandHandler(
+            ICommentRepository repo,
+            IReportRepository reportRepo,
+            IUserContextService userContext)
         {
             _repo = repo;
             _reportRepo = reportRepo;
+            _userContext = userContext;
         }
 
         public async Task<OperationResult<bool>> Handle(DeleteCommentCommand request, CancellationToken cancellationToken)
         {
+            var currentAccountId = _userContext.AccountId;
+            if (currentAccountId is null)
+                return OperationResult<bool>.Failure("User not authenticated.");
+
             var comment = await _repo.GetByIdAsync(request.Id);
             if (comment is null)
                 return OperationResult<bool>.Failure("Comment not found.");
 
-            // CommentId on Report has no FK constraint (avoids multi-cascade-path error),
-            // so reports for this comment must be removed manually before deletion.
+            if (!_userContext.IsAdmin && comment.AccountId != currentAccountId.Value)
+                return OperationResult<bool>.Failure("Forbidden.");
+
             var commentReports = await _reportRepo.FindAsync(r => r.CommentId == request.Id);
             foreach (var report in commentReports)
                 await _reportRepo.DeleteAsync(report);

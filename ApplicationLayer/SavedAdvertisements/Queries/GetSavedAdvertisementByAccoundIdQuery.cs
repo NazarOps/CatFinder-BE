@@ -6,5 +6,5 @@ using System.Text;
 
 namespace ApplicationLayer.SavedAdvertisements.Queries
 {
-    public record GetSavedAdvertisementByAccoundIdQuery(int accountId) : IRequest<IEnumerable<SavedAdvertisementResponseDto>>;
+    public record GetSavedAdvertisementByAccoundIdQuery() : IRequest<IEnumerable<SavedAdvertisementResponseDto>>;
 }

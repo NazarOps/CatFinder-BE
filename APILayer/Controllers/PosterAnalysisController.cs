@@ -1,16 +1,30 @@
-using Microsoft.AspNetCore.Mvc;
 using OpenAI;
 using OpenAI.Chat;
 using System.ClientModel;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace APILayer.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class PosterAnalysisController : ControllerBase
     {
+        private const long MaxUploadBytes = 5 * 1024 * 1024;
+
+        private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+        };
+
         private readonly IConfiguration _config;
 
         public PosterAnalysisController(IConfiguration config)
@@ -18,6 +32,7 @@ namespace APILayer.Controllers
             _config = config;
         }
 
+        [EnableRateLimiting("uploads")]
         [HttpPost]
         [Consumes("multipart/form-data")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -27,6 +42,12 @@ namespace APILayer.Controllers
         {
             if (image == null || image.Length == 0)
                 return BadRequest(new { error = "Ingen bild angiven" });
+
+            if (image.Length > MaxUploadBytes)
+                return BadRequest(new { error = "Bilden får vara högst 5 MB." });
+
+            if (!AllowedContentTypes.Contains(image.ContentType ?? string.Empty))
+                return BadRequest(new { error = "Filformat stöds ej." });
 
             var apiKey = _config["OpenAI:ApiKey"];
             if (string.IsNullOrEmpty(apiKey) || apiKey == "YOUR_OPENAI_API_KEY")

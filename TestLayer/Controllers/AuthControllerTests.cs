@@ -1,4 +1,5 @@
 using APILayer.Controllers;
+using ApplicationLayer.Auth;
 using ApplicationLayer.Auth.Commands.Login;
 using ApplicationLayer.Auth.Commands.Logout;
 using ApplicationLayer.Auth.Commands.RefreshToken;
@@ -10,6 +11,7 @@ using DomainLayer.Models.Common;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace TestLayer.Controllers;
@@ -29,7 +31,14 @@ public class AuthControllerTests
     {
         _mediator = new Mock<ISender>();           // create a blank fake mediator
         _userContext = new Mock<IUserContextService>(); // create a blank fake user context
-        _controller = new AuthController(_mediator.Object, _userContext.Object); // inject the fakes
+        _controller = new AuthController(
+            _mediator.Object,
+            _userContext.Object,
+            Options.Create(new JwtSettings { RefreshTokenExpiresInDays = 7 })); // inject the fakes
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext()
+        };
     }
 
     // A new user registers successfully → controller should return 201 Created.
@@ -128,7 +137,8 @@ public class AuthControllerTests
                     new AuthResponseDto()));                //   with an empty auth response
 
         // Act
-        var result = await _controller.RefreshToken("valid-token"); // call RefreshToken with a dummy token string
+        _controller.HttpContext.Request.Headers.Cookie = "catfinder_refresh_token=valid-token";
+        var result = await _controller.RefreshToken(); // call RefreshToken with a dummy token cookie
 
         // Assert
         Assert.That(result, Is.InstanceOf<OkObjectResult>()); // result must be a 200 OK
@@ -148,7 +158,8 @@ public class AuthControllerTests
                     "Token expired."));                     //   with this error message
 
         // Act
-        var result = await _controller.RefreshToken("expired-token"); // call RefreshToken with an expired token string
+        _controller.HttpContext.Request.Headers.Cookie = "catfinder_refresh_token=expired-token";
+        var result = await _controller.RefreshToken(); // call RefreshToken with an expired token cookie
 
         // Assert
         Assert.That(result, Is.InstanceOf<BadRequestObjectResult>()); // result must be a 400 Bad Request

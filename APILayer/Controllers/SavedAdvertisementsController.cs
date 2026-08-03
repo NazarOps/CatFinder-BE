@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace APILayer.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class SavedAdvertisementsController : ControllerBase
@@ -20,11 +21,11 @@ namespace APILayer.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet("account/{accountId:int}")]
+        [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<SavedAdvertisementResponseDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<SavedAdvertisementResponseDto>>> GetByAccount(int accountId)
+        public async Task<ActionResult<IEnumerable<SavedAdvertisementResponseDto>>> GetByAccount()
         {
-            var result = await _mediator.Send(new GetSavedAdvertisementByAccoundIdQuery(accountId));
+            var result = await _mediator.Send(new GetSavedAdvertisementByAccoundIdQuery());
             return Ok(result);
         }
 
@@ -35,7 +36,7 @@ namespace APILayer.Controllers
         {
             var result = await _mediator.Send(new GetSavedAdvertisementByIdQuery(id));
 
-            if(result == null)
+            if (result == null)
             {
                 return NotFound();
             }
@@ -58,13 +59,10 @@ namespace APILayer.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public async Task<IActionResult> Delete(int id)
         {
-            await _mediator.Send(
-                new DeleteSavedAdvertisementCommand(id)
-                );
+            await _mediator.Send(new DeleteSavedAdvertisementCommand(id));
 
             return NoContent();
         }

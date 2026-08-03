@@ -6,7 +6,7 @@ using MediatR;
 
 namespace ApplicationLayer.Cat.Queries.GetCatbyId
 {
-    public class GetCatByIdQueryHandler : IRequestHandler<GetCatByIdQuery, OperationResult<CatResponseDto>>
+    public class GetCatByIdQueryHandler : IRequestHandler<GetCatByIdQuery, OperationResult<PublicCatResponseDto>>
     {
         private readonly ICatRepository _repo;
         private readonly IMapper _mapper;
@@ -17,13 +17,13 @@ namespace ApplicationLayer.Cat.Queries.GetCatbyId
             _mapper = mapper;
         }
 
-        public async Task<OperationResult<CatResponseDto>> Handle(GetCatByIdQuery request, CancellationToken cancellationToken)
+        public async Task<OperationResult<PublicCatResponseDto>> Handle(GetCatByIdQuery request, CancellationToken cancellationToken)
         {
             var cat = await _repo.GetByIdAsync(request.Id);
             if (cat is null)
-                return OperationResult<CatResponseDto>.Failure("Cat not found.");
+                return OperationResult<PublicCatResponseDto>.Failure("Cat not found.");
 
-            return OperationResult<CatResponseDto>.Success(_mapper.Map<CatResponseDto>(cat));
+            return OperationResult<PublicCatResponseDto>.Success(_mapper.Map<PublicCatResponseDto>(cat));
         }
     }
 }

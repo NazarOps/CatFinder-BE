@@ -1,3 +1,4 @@
+using ApplicationLayer.Common.Security;
 using ApplicationLayer.Users.Interfaces;
 using DomainLayer.Models;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,16 @@ namespace InfrastructureLayer.Repositories.Accounts
         /// Used during token rotation to validate the incoming refresh token.
         /// </summary>
         public async Task<Account?> GetByRefreshTokenAsync(string refreshToken)
-            => await _dbSet.FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
+        {
+            var refreshTokenHash = TokenHasher.Hash(refreshToken);
+            var account = await _dbSet.FirstOrDefaultAsync(a => a.RefreshToken == refreshTokenHash);
+            if (account is not null)
+            {
+                return account;
+            }
+
+            // Temporary compatibility path for sessions issued before refresh tokens were hashed at rest.
+            return await _dbSet.FirstOrDefaultAsync(a => a.RefreshToken == refreshToken);
+        }
     }
 }

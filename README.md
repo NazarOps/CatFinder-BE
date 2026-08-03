@@ -130,6 +130,7 @@ Query params for listing: `type` (`Lost` or `Found`), `city`
 | Method | Endpoint | Auth required |
 |---|---|---|
 | GET | `/api/savedadvertisements` | Yes |
+| GET | `/api/savedadvertisements/{id}` | Yes |
 | POST | `/api/savedadvertisements` | Yes |
 | DELETE | `/api/savedadvertisements/{id}` | Yes |
 
